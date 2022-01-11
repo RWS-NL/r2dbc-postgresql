@@ -18,9 +18,11 @@ package io.r2dbc.postgresql.api;
 
 import io.r2dbc.spi.IsolationLevel;
 import io.r2dbc.spi.ValidationDepth;
+import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.nio.ByteBuffer;
 import java.time.Duration;
 
 public final class MockPostgresqlConnection implements PostgresqlConnection {
@@ -118,6 +120,11 @@ public final class MockPostgresqlConnection implements PostgresqlConnection {
 
     @Override
     public Mono<Boolean> validate(ValidationDepth depth) {
+        return Mono.empty();
+    }
+
+    @Override
+    public Mono<Integer> copyIn(String sql, Publisher<ByteBuffer> stdin) {
         return Mono.empty();
     }
 
