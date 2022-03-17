@@ -50,17 +50,16 @@ final class PostgresqlCopyIn {
         this.context = Assert.requireNonNull(context, "context must not be null");
     }
 
-    public Mono<Long> copy(String sql, Publisher<ByteBuffer> stdin) {
-        Flux<FrontendMessage> insertData = Flux.from(stdin)
-            .map(buffer -> new CopyData(Unpooled.wrappedBuffer(buffer)));
-
-        return copyIn(sql, insertData);
+    Mono<Long> copy(String sql, Publisher<ByteBuffer> stdin) {
+        return Flux.from(stdin)
+            .map(buffer -> new CopyData(Unpooled.wrappedBuffer(buffer)))
+            .as(messages ->  copyIn(sql, messages));
     }
 
-    private Mono<Long> copyIn(String sql, Flux<FrontendMessage> frontendMessages) {
+    private Mono<Long> copyIn(String sql, Flux<CopyData> copyDataMessages) {
         Client client = context.getClient();
 
-        Flux<BackendMessage> backendMessages = frontendMessages
+        Flux<BackendMessage> backendMessages = copyDataMessages
             .doOnNext(client::send)
             .doOnError(e -> !(e instanceof IllegalArgumentException), (e) -> sendCopyFail(e.getMessage()))
             .doOnDiscard(ReferenceCounted.class, ReferenceCountUtil::release)
